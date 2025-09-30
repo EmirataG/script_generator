@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "edge"; // optional, can also remove if you want Node runtime
+export const runtime = "edge";
 
 export async function POST(req: Request) {
   try {
@@ -38,8 +38,13 @@ export async function POST(req: Request) {
     const script = data.choices?.[0]?.message?.content || "";
 
     return NextResponse.json({ script });
-  } catch (error: any) {
-    console.error(error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error("Unknown error", error);
+    }
+
     return NextResponse.json(
       { error: "Failed to generate script" },
       { status: 500 }
