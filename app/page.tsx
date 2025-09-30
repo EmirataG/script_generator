@@ -19,13 +19,11 @@ export default function Home() {
     setLoading(true);
     setScript("");
 
-    console.log(cleanNotes(notes));
-
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes: notes }),
+        body: JSON.stringify({ notes: cleanNotes(notes) }),
       });
 
       const data: { script?: string; error?: string } = await res.json();

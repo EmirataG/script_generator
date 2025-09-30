@@ -14,12 +14,13 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         model: "deepseek-chat",
+        stream: true, // ✅ enable streaming
         max_tokens: 2500,
         messages: [
           {
             role: "system",
             content:
-              "You are a Turkish language teacher creating a professional and short lesson script. Do not use bullet points in the script. Write a continuous script exactly as the teacher should speak. It should be in English with examples in Turkish. Insert clear markers (Slide n: Slide Name, n being the slide number) before a new slide. After each slide, make a short list of bullet points to be added in it. The first slide should always be an overview and the bullet points to it should be the topics covered.",
+              "You are a Turkish language teacher creating a professional and short lesson script. Write in full sentences, in English with examples in Turkish. Insert markers like (Slide n: Slide Name). After each slide, make a short bullet list of its key points. The first slide should always be an overview.",
           },
           {
             role: "user",
@@ -29,15 +30,39 @@ export async function POST(req: Request) {
       }),
     });
 
-    if (!response.ok) {
+    if (!response.ok || !response.body) {
       const text = await response.text();
       throw new Error(`API error: ${text}`);
     }
 
-    const data = await response.json();
-    const script = data.choices?.[0]?.message?.content || "";
+    // ✅ Buffer the streamed chunks
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let result = "";
 
-    return NextResponse.json({ script });
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split("\n");
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith("data:")) continue;
+        if (trimmed === "data: [DONE]") break;
+
+        try {
+          const json = JSON.parse(trimmed.replace(/^data: /, ""));
+          const content = json.choices?.[0]?.delta?.content;
+          if (content) result += content;
+        } catch (err) {
+          console.error("Failed to parse line:", trimmed, err);
+        }
+      }
+    }
+
+    return NextResponse.json({ script: result });
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error(error.message);
