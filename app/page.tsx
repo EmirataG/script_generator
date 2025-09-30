@@ -5,48 +5,9 @@ import { useState } from "react";
 function cleanNotes(input: string): string {
   return input
     .split("\n")
-    .map(line => line.trim())
-    .filter(line => line !== "")
+    .map((line) => line.trim().replace(/\s+/g, " ")) // collapse spaces
+    .filter((line) => line !== "")
     .join("\n");
-}
-
-async function handleStream(
-  res: Response,
-  setScript: (updater: (prev: string) => string) => void
-) {
-  if (!res.body) return;
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-
-  let done = false;
-
-  while (!done) {
-    const { value, done: readerDone } = await reader.read();
-    if (readerDone) break;
-
-    const chunk = decoder.decode(value, { stream: true });
-    const lines = chunk.split("\n");
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith("data:")) continue;
-      if (trimmed === "data: [DONE]") {
-        done = true;
-        break;
-      }
-
-      try {
-        const json = JSON.parse(trimmed.replace(/^data: /, ""));
-        const content = json.choices?.[0]?.delta?.content;
-        if (content) {
-          setScript(prev => prev + content);
-        }
-      } catch (err) {
-        console.error("Could not parse SSE line:", trimmed, err);
-      }
-    }
-  }
 }
 
 export default function Home() {
@@ -58,14 +19,28 @@ export default function Home() {
     setLoading(true);
     setScript("");
 
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notes: cleanNotes(notes) }), // cleaned notes
-    });
+    console.log(cleanNotes(notes));
 
-    await handleStream(res, setScript);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: notes }),
+      });
+
+      const data: { script?: string; error?: string } = await res.json();
+
+      if (data.script) {
+        setScript(data.script);
+      } else {
+        setScript("Error generating script");
+      }
+    } catch (err) {
+      console.error(err);
+      setScript("Failed to fetch script");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const copyScript = () => {
