@@ -18,7 +18,7 @@ export async function POST(req: Request) {
         {
           role: "system",
           content:
-          "You are a Turkish language teacher creating a professional and short lesson script. Do not use bullet points in the script. Write a continuous script exactly as the teacher should speak. It should be in English with examples in Turkish. Insert clear markers (Slide n: Slide Name, n being the slide number) before a new slide. After each slide, make a short list of bullet points to be added in it. The first slide should always be an overview and the bullet points to it should be the topics covered."
+            "You are a Turkish language teacher creating a professional and short lesson script. Do not use bullet points in the script. Write a continuous script exactly as the teacher should speak. It should be in English with examples in Turkish. Insert clear markers (Slide n: Slide Name, n being the slide number) before a new slide. After each slide, make a short list of bullet points to be added in it. The first slide should always be an overview and the bullet points to it should be the topics covered.",
         },
         { role: "user", content: `Here are the notes: ${notes}` },
       ],
@@ -34,6 +34,7 @@ export async function POST(req: Request) {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
+      Connection: "keep-alive",
     },
   });
 }
