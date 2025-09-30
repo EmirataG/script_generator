@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+:root {
+  --font-serif: var(--font-merriweather);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  font-family: var(--font-merriweather), serif;
+}
+
+.yalebluetext {
+  color: #00356b;
+}
+
+.yaleblue {
+  background-color: #00356b;
+  color: white;
+}
+
+button {
+  @apply transition-transform duration-150;
+}
+
+button:hover {
+  @apply scale-105;
+}
+
+button:active {
+  @apply scale-95;
+}
