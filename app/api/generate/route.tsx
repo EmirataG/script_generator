@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sysPrompt } from "@/app/constants";
 
 export const runtime = "nodejs";
 
@@ -19,8 +20,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "system",
-            content:
-              "You are a Turkish language teacher creating a professional and short lesson script. Write in full sentences, in English with examples in Turkish. Insert markers like (Slide n: Slide Name). After each slide, make a short bullet list of its key points. The first slide should always be an overview.",
+            content: sysPrompt,
           },
           {
             role: "user",
@@ -35,7 +35,6 @@ export async function POST(req: Request) {
       throw new Error(`API error: ${text}`);
     }
 
-    // ✅ Buffer the streamed chunks
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let result = "";
